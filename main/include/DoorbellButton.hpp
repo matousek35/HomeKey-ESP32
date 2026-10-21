@@ -3,7 +3,7 @@
 #include "DoorbellDebouncer.hpp"
 class DoorbellButton {
 public:
-    bool begin();
+    bool begin(const espConfig::misc_config_t& config);
     void poll();
 private:
     GPIOAllocator::GPIOLease pin_;

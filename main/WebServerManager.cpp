@@ -1,4 +1,5 @@
 #include "WaveshareCamera.hpp"
+#include "DoorbellCameraSettings.hpp"
 // ============================================================================
 // WebServerManager.cpp - ESP32 Web Server Implementation
 // ============================================================================
@@ -350,7 +351,8 @@ BaseType_t task;
   ESP_LOGI(TAG, "Web server initialization complete");
 
   m_isInitialized = true;
-  if (!isApMode) WaveshareCamera::startStream(handleCameraStream, this);
+  if (!isApMode && m_configManager.getConfig<espConfig::misc_config_t>().cameraEnabled)
+    WaveshareCamera::startStream(handleCameraStream, this);
 }
 
 /**
@@ -1015,17 +1017,19 @@ esp_err_t WebServerManager::handleSaveConfig(httpd_req_t *req) {
     return sendJsonError(req, "Missing 'type' parameter");
   }
 
-  const size_t max_content_size = std::string_view(type_param) == "automation" ? 8192 : 2048;
+  const size_t max_content_size = (std::string_view(type_param) == "automation" || std::string_view(type_param) == "misc") ? 8192 : 2048;
   if (req->content_len >= max_content_size) {
     return sendJsonError(req, "Request body too large", "413 Payload Too Large");
   }
 
   std::vector<char> content(max_content_size, 0);
-  int ret = httpd_req_recv(req, content.data(), content.size() - 1);
-  if (ret <= 0) {
-    return ESP_FAIL;
+  size_t received = 0;
+  while (received < req->content_len) {
+    int ret = httpd_req_recv(req, content.data() + received, req->content_len - received);
+    if (ret <= 0) return ESP_FAIL;
+    received += ret;
   }
-  content[ret] = '\0';
+  content[received] = '\0';
 
   JsonGuard obj(cJSON_Parse(content.data()));
   if (!obj) {
@@ -1054,6 +1058,11 @@ esp_err_t WebServerManager::handleSaveConfig(httpd_req_t *req) {
 
   if (!validateRequest(req, configSchema.get(), obj.get())) {
     return ESP_OK; // validateRequest already sent a full error response
+  }
+
+  if (type == "misc") {
+    auto error = validateDoorbellCameraSettings(configSchema.get(), obj.get());
+    if (!error.empty()) return sendJsonError(req, error);
   }
 
   bool success = false, rebootNeeded = false;

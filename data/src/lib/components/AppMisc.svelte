@@ -13,6 +13,7 @@
 		type NfcGpioPinsPreset,
 	} from "$lib/types/api";
 	import { diff } from "$lib/utils/objDiff";
+	import DoorbellCameraConfig from "$lib/components/DoorbellCameraConfig.svelte";
 	import HardwareConfig from "$lib/components/HardwareConfig.svelte";
 	import CertManager from "$lib/components/CertManager.svelte";
 	import PairingQR from "$lib/components/PairingQR.svelte";
@@ -33,7 +34,7 @@
 		error = $bindable() 
 	}: Props = $props();
 
-	let activeTab = $state<'homekit' | 'hardware' | 'keypad' | 'network' | 'security'>('homekit');
+	let activeTab = $state<'homekit' | 'hardware' | 'keypad' | 'doorbell' | 'network' | 'security'>('homekit');
 
 	// svelte-ignore state_referenced_locally
 	let miscConfig = $state<MiscConfig>($state.snapshot(misc));
@@ -290,6 +291,7 @@
 
 			<!-- Tabs -->
 			<div class="flex bg-base-300 p-1 rounded-xl gap-1">
+        <button type="button" class="flex-1 tab rounded-lg text-xs {activeTab === 'doorbell' ? 'bg-base-100 text-primary font-medium shadow-sm' : 'text-base-content/60'}" onclick={() => activeTab = 'doorbell'}>Doorbell / Camera</button>
 				<button
 					type="button"
 					class="flex-1 tab flex-col py-2 rounded-lg transition-colors {activeTab === 'homekit' ? 'bg-base-100 text-primary font-medium shadow-sm' : 'text-base-content/60 hover:bg-base-200'}"
@@ -458,6 +460,10 @@
               </div>
 						</div>
 					{/if}
+
+					{#if activeTab === 'doorbell'}
+            <DoorbellCameraConfig bind:config={miscConfig} />
+          {/if}
 
 					{#if activeTab === 'hardware'}
 						<div class="space-y-4">

@@ -24,20 +24,21 @@ esp_err_t unavailable(httpd_req_t* req) {
 }
 #endif
 
-void WaveshareCamera::begin() {
+void WaveshareCamera::begin(const espConfig::misc_config_t& config) {
 #ifdef CONFIG_HOMEKEY_WAVESHARE_CAMERA
-    if (ready) return;
+    if (ready || !config.cameraEnabled) return;
     if (heap_caps_get_total_size(MALLOC_CAP_SPIRAM) == 0) {
         ESP_LOGE("Camera", "PSRAM is unavailable; camera disabled");
         return;
     }
     // Board wiring: https://docs.waveshare.com/ESP32-S3-ETH/Development-Environment-Setup-Arduino
-    const int inputs[] = {1, 2, 39, 18, 15, 38, 40, 42, 46, 45, 41};
-    const int outputs[] = {8, 3, 48, 47};
+    const int inputs[] = {config.cameraVsyncGpio, config.cameraHrefGpio, config.cameraPclkGpio,
+        config.cameraD0Gpio, config.cameraD1Gpio, config.cameraD2Gpio, config.cameraD3Gpio, config.cameraD4Gpio, config.cameraD5Gpio, config.cameraD6Gpio, config.cameraD7Gpio};
+    const int outputs[] = {config.cameraPowerGpio, config.cameraXclkGpio, config.cameraSdaGpio, config.cameraSclGpio};
     auto claim = [](int pin, gpio_mode_t mode) {
         auto result = GPIOAllocator::instance().acquire(gpio_num_t(pin), mode,
             mode == GPIO_MODE_INPUT ? GPIOAllocator::PinRole::GpioIn : GPIOAllocator::PinRole::GpioOut,
-            GPIOAllocator::PinConsumer::Hardware, "WAVESHARE_CAMERA");
+            GPIOAllocator::PinConsumer::DoorbellCamera, "WAVESHARE_CAMERA");
         if (!result || !result->valid()) return false;
         leases.push_back(std::move(result.value()));
         return true;
@@ -48,14 +49,14 @@ void WaveshareCamera::begin() {
     for (int pin : outputs) {
         if (!claim(pin, GPIO_MODE_OUTPUT)) { leases.clear(); return; }
     }
-    gpio_set_level(GPIO_NUM_8, 0); // Active-low regulator enable (Waveshare cam_web.c).
+    gpio_set_level(gpio_num_t(config.cameraPowerGpio), 0); // Active-low regulator enable (Waveshare cam_web.c).
     vTaskDelay(pdMS_TO_TICKS(20));
     camera_config_t c{};
     c.pin_pwdn = -1; c.pin_reset = -1;
-    c.pin_xclk = 3; c.pin_sccb_sda = 48; c.pin_sccb_scl = 47;
-    c.pin_d0 = 41; c.pin_d1 = 45; c.pin_d2 = 46; c.pin_d3 = 42;
-    c.pin_d4 = 40; c.pin_d5 = 38; c.pin_d6 = 15; c.pin_d7 = 18;
-    c.pin_vsync = 1; c.pin_href = 2; c.pin_pclk = 39;
+    c.pin_xclk = config.cameraXclkGpio; c.pin_sccb_sda = config.cameraSdaGpio; c.pin_sccb_scl = config.cameraSclGpio;
+    c.pin_d0 = config.cameraD0Gpio; c.pin_d1 = config.cameraD1Gpio; c.pin_d2 = config.cameraD2Gpio; c.pin_d3 = config.cameraD3Gpio;
+    c.pin_d4 = config.cameraD4Gpio; c.pin_d5 = config.cameraD5Gpio; c.pin_d6 = config.cameraD6Gpio; c.pin_d7 = config.cameraD7Gpio;
+    c.pin_vsync = config.cameraVsyncGpio; c.pin_href = config.cameraHrefGpio; c.pin_pclk = config.cameraPclkGpio;
     c.xclk_freq_hz = 20000000;
     c.ledc_timer = LEDC_TIMER_3; c.ledc_channel = LEDC_CHANNEL_7;
     c.pixel_format = PIXFORMAT_JPEG; c.frame_size = FRAMESIZE_VGA;
@@ -64,7 +65,7 @@ void WaveshareCamera::begin() {
     esp_err_t err = esp_camera_init(&c);
     if (err != ESP_OK) {
         ESP_LOGE("Camera", "Initialization failed: %s", esp_err_to_name(err));
-        gpio_set_level(GPIO_NUM_8, 1);
+        gpio_set_level(gpio_num_t(config.cameraPowerGpio), 1);
         leases.clear();
         return;
     }

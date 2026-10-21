@@ -3,11 +3,12 @@
 #include "app_events.hpp"
 #include "esp_timer.h"
 
-bool DoorbellButton::begin() {
+bool DoorbellButton::begin(const espConfig::misc_config_t& config) {
 #ifdef CONFIG_HOMEKEY_DOORBELL
+    if (!config.doorbellEnabled) return false;
     auto result = GPIOAllocator::instance().acquire(
-        gpio_num_t(CONFIG_HOMEKEY_DOORBELL_GPIO), GPIO_MODE_INPUT,
-        GPIOAllocator::PinRole::GpioIn, GPIOAllocator::PinConsumer::Hardware, "DOORBELL_BUTTON");
+        gpio_num_t(config.doorbellGpio), GPIO_MODE_INPUT,
+        GPIOAllocator::PinRole::GpioIn, GPIOAllocator::PinConsumer::DoorbellCamera, "DOORBELL_BUTTON");
     if (!result || !result->valid()) {
         ESP_LOGE("Doorbell", "Cannot reserve doorbell GPIO; button disabled");
         return false;

@@ -216,7 +216,7 @@ void HomeKitLock::begin() {
       }
       bool standaloneDoorbell = false;
 #ifdef CONFIG_HOMEKEY_DOORBELL
-      standaloneDoorbell = true;
+      standaloneDoorbell = miscConfig.doorbellEnabled;
 #endif
       if ((miscConfig.keypadEnabled && m_accessCodeManager) || standaloneDoorbell) {
           m_doorbell = new DoorbellService();

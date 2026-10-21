@@ -12,6 +12,7 @@
 #include "ReaderDataManager.hpp"
 #include "HardwareManager.hpp"
 #include "DoorbellButton.hpp"
+#include "HttpNotifier.hpp"
 #include "WaveshareCamera.hpp"
 #include "MqttManager.hpp"
 #include "automation/AutomationEngine.hpp"
@@ -40,6 +41,7 @@ static dns_server_handle_t dns_server = NULL;
 
 bool pollHS = false;
 DoorbellButton doorbellButton;
+HttpNotifier httpNotifier;
 
 static void dhcp_set_captiveportal_url(void) {
     esp_netif_ip_info_t ip_info;
@@ -225,9 +227,10 @@ void setup() {
   webServerManager.setMqttManager(mqttManager.get());
   hardwareManager->begin();
   homekitLock->begin();
+  httpNotifier.begin(miscConfig);
   lockManager->begin();
-  doorbellButton.begin();
-  WaveshareCamera::begin();
+  doorbellButton.begin(miscConfig);
+  WaveshareCamera::begin(miscConfig);
   pollHS = true;
 }
 /**

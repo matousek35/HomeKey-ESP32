@@ -207,6 +207,31 @@ export interface MiscConfig {
   keypadMaxCodeLength: number;
   /** Maximum number of stored access codes */
   keypadMaxCodes: number;
+  doorbellEnabled: boolean;
+  cameraEnabled: boolean;
+  doorbellGpio: number;
+  cameraPowerGpio: number;
+  cameraXclkGpio: number;
+  cameraSdaGpio: number;
+  cameraSclGpio: number;
+  cameraD0Gpio: number;
+  cameraD1Gpio: number;
+  cameraD2Gpio: number;
+  cameraD3Gpio: number;
+  cameraD4Gpio: number;
+  cameraD5Gpio: number;
+  cameraD6Gpio: number;
+  cameraD7Gpio: number;
+  cameraVsyncGpio: number;
+  cameraHrefGpio: number;
+  cameraPclkGpio: number;
+  httpNotifyEnabled: boolean;
+  httpDoorbellUrl: string;
+  httpLockedUrl: string;
+  httpUnlockedUrl: string;
+  httpUsername: string;
+  httpPassword: string;
+
 }
 
 /**

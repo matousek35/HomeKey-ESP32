@@ -43,7 +43,7 @@ při kolizi kameru odmítne spustit; důvod je v logu.
    `waveshare-doorbell-camera`.
 3. Po úspěšném běhu stáhněte artefakt `waveshare-camera`, nebo `waveshare-doorbell`
    pro variantu bez kamery. Uvnitř je `merged-binary.bin` pro první instalaci
-   a `HomeKey-ESP32.bin` pro OTA aktualizaci aplikace.
+   a `HomeKey-ESP32.bin` pro OTA aktualizaci aplikace. `spiffs.bin` obsahuje webové rozhraní (LittleFS).
 4. V ESP-IDF prostředí použijte např.:
 
 ```sh
@@ -74,8 +74,8 @@ Build sám zavolá `bun install` a sestaví web. Nepoužívejte lokálně `CI=tr
 pokud jste předem nesestavili `data/dist`.
 Pro variantu bez kamery vynechte `;profiles/camera.defaults` a použijte jiné
 `-B` a `-DSDKCONFIG`, aby se nepřevzala již uložená konfigurace kamery.
-Změna GPIO tlačítka: stejným příkazem spusťte `menuconfig`, sekce
-**HomeKey doorbell and Waveshare camera**. Výchozí GPIO16, debounce 60 ms.
+GPIO tlačítka lze změnit ve webovém nastavení **Misc → Doorbell / Camera**.
+Výchozí GPIO16, debounce 60 ms; menuconfig mění pouze výchozí hodnotu pro novou konfiguraci.
 
 ## První spuštění / již používaná deska
 
@@ -138,3 +138,78 @@ Zdroje: [Waveshare pinout a schéma](https://docs.waveshare.com/ESP32-S3-ETH/Res
 [signály kamery a Ethernetu](https://docs.waveshare.com/ESP32-S3-ETH/Development-Environment-Setup-Arduino),
 [Espressif camera driver](https://github.com/espressif/esp32-camera),
 [Loxone podporované formáty](https://www.loxone.com/eses/kb/intercom-personalizado/).
+
+
+## Přímé HTTP události do Loxone (bez MQTT)
+
+V **Misc → Doorbell / Camera** zapněte HTTP notifications. Zadejte jednotlivé
+adresy pro zazvonění, zamčení a odemčení. Prázdná adresa danou událost vypne.
+Příklad pro virtuální vstupy `Zvonek` a `Zamek` vytvořené v Loxone Config:
+
+| Událost | Příklad URL |
+|---|---|
+| Zazvonění | `http://IP_MINISERVERU/dev/sps/io/Zvonek/Pulse` |
+| Zamčeno | `http://IP_MINISERVERU/dev/sps/io/Zamek/1` |
+| Odemčeno | `http://IP_MINISERVERU/dev/sps/io/Zamek/0` |
+
+Jméno a heslo uživatele s oprávněním k těmto vstupům vyplňte do samostatných polí
+HTTP Basic username/password, nikoliv do URL. Všechny tři adresy používají stejné
+přihlášení. Příklady nahraďte IP a identifikátory svých vstupů; zvláštní znaky
+v cestě URL musí být procentově zakódované. Podklady:
+[Loxone Webservices](https://www.loxone.com/cscz/kb/api-webservices/).
+Konkrétní generace/verze a oprávnění Miniservéru se musí ověřit v instalaci.
+HTTPS ověřuje certifikát vůči standardnímu CA bundle; self-signed certifikáty
+bez důvěryhodného řetězce nejsou podporované. HTTP používejte v důvěryhodné lokální síti.
+
+Přenos probíhá metodou GET na samostatném tasku, bez MQTT. MQTT lze zcela zastavit
+vymazáním adresy brokeru v jeho nastavení. HTTP funguje i pokud broker neexistuje.
+Zvonek z GPIO i z aktivní klávesnice používá stejnou událost. Stav zámku se posílá
+při změně **aktuálního stavu ve firmwaru** na zamčeno/odemčeno, nikoliv při pouhé
+změně cíle. Bez čidla zpětné vazby to není potvrzení mechanické polohy zámku.
+Stavy jammed/unknown/locking/unlocking vlastní URL nemají. Po startu se stav
+automaticky nesynchronizuje; jde o hlášení změn, nikoliv MQTT retained náhradu.
+
+Fronta má 8 událostí, události starší než 5 sekund se zahazují. Síťový timeout
+je 2 sekundy; automatické opakování a přesměrování jsou vypnuté, aby se nezopakoval
+již provedený impulz. Výpadky mohou způsobit ztrátu události. Log `HTTPNotify`
+ukazuje HTTP stav, nikoliv URL nebo heslo; úspěch HTTP 2xx nepotvrzuje aplikování
+příkazu uvnitř Loxone. Po nastavení ověřte vstupy v Live View.
+
+## Vypnutí funkcí a změna pinů
+
+Ve stejné záložce jsou samostatné přepínače **Enable GPIO doorbell** a
+**Enable camera** a seznam všech 15 kamerových signálů včetně napájecího enable.
+Uložením se zařízení restartuje; vypnutá funkce si po restartu nezabere GPIO.
+Vypnutí GPIO zvonku neovlivňuje zvonek samostatné klávesnice.
+Kamera vyžaduje variantu `waveshare-camera`, nelze ji zapnout v binárce bez driveru.
+Při přechodu z varianty bez kamery na kamerovou variantu ji zapněte ručně,
+pokud už byla v nastavení uložena hodnota vypnuto.
+
+Piny FPC konektoru Waveshare jsou fyzicky pevné: pro dodaný kit ponechte výchozí
+přiřazení. Změna v UI nedokáže změnit zapojení desky. Kontrola odmítá duplicitní
+piny kamery/zvonku, rezervované piny a piny obsazené jinou běžící funkcí.
+Při přesunu pinu z jiné funkce ji nejdříve vypněte/přepojte, uložte a restartujte.
+Při kolizi z importovaného nastavení firmware dotčenou funkci nespustí; zkontrolujte log.
+
+## OTA této aktualizace
+
+Pro kompatibilní nešifrovanou instalaci ESP32-S3 se stejným rozdělením flash:
+
+1. Zálohujte konfiguraci a stáhněte oba soubory ze stejného úspěšného buildu.
+2. V OTA firmware nahrajte `HomeKey-ESP32.bin` a nechte zařízení restartovat.
+3. V OTA aktualizaci **LittleFS / web UI** nahrajte `spiffs.bin` (jde o LittleFS
+   obraz, název odpovídá partition labelu). Potom znovu načtěte stránku bez cache.
+4. Otevřete novou záložku, nastavte URL a ověřte zvonek i obě změny zámku.
+
+`merged-binary.bin` není soubor pro OTA. Při odlišném partition layoutu nebo
+šifrování nelze kompatibilitu OTA předpokládat; použijte odpovídající postup pro
+aktuální firmware. Nastavení v NVS aktualizace aplikace/webu nemaže.
+
+## Výchozí verze a kontroly
+
+Základ je upstream `main` commit `f167cba1950aa9e37afb9cb06163a78299599a67`
+(označení `dev`), nikoliv release tag `v0.9`. K datu doplnění funkcí je poslední
+upstream release `v0.9`; tento fork nadále zachovává dosavadní vývojový základ.
+CI sestavuje oba firmwary a webové rozhraní. Host testy ověřují debounce a
+výběr HTTP událostí, expiraci a základní validaci URL. Funkční zkouška na
+ESP32/OV5640 a vašem Miniservéru zůstává nutná.
