@@ -44,7 +44,7 @@ void WaveshareCamera::begin() {
     for (int pin : outputs) {
         if (!claim(pin, GPIO_MODE_OUTPUT)) { leases.clear(); return; }
     }
-    gpio_set_level(GPIO_NUM_8, 1); // Camera regulator enable, not sensor PWDN.
+    gpio_set_level(GPIO_NUM_8, 0); // Active-low regulator enable (Waveshare cam_web.c).
     vTaskDelay(pdMS_TO_TICKS(20));
     camera_config_t c{};
     c.pin_pwdn = -1; c.pin_reset = -1;
@@ -60,7 +60,7 @@ void WaveshareCamera::begin() {
     esp_err_t err = esp_camera_init(&c);
     if (err != ESP_OK) {
         ESP_LOGE("Camera", "Initialization failed: %s", esp_err_to_name(err));
-        gpio_set_level(GPIO_NUM_8, 0);
+        gpio_set_level(GPIO_NUM_8, 1);
         leases.clear();
         return;
     }
