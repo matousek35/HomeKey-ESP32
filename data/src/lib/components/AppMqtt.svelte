@@ -46,7 +46,7 @@
         </svg>
       </div>
     </h1>
-    <p class="text-sm text-base-content/60">Configure MQTT broker connection and topic mappings.</p>
+    <p class="text-sm text-base-content/60">Configure the MQTT connection. Topic mappings and NFC filtering also apply to HTTP.</p>
   </div>
 
   {#if !mqtt && error}
@@ -105,7 +105,9 @@
               <div class="flex items-center gap-2">
                 <span class="inline-flex h-3 w-3 rounded-full {mqttConnected === true ? 'bg-success' : mqttConnected === false ? (mqttErrorCode > 0 ? 'bg-error' : 'bg-warning') : 'bg-base-300'}"></span>
                 <span class="text-sm font-medium">
-                  {#if mqttConnected === true}
+                  {#if !mqttConfig.mqttBroker || mqttConfig.mqttBroker === "0.0.0.0"}
+                    <span class="text-base-content/60">Disabled</span>
+                  {:else if mqttConnected === true}
                     <span class="text-success">Connected</span>
                   {:else if mqttConnected === false}
                     {#if mqttErrorCode > 0}
@@ -135,9 +137,8 @@
                 <input
                   type="text"
                   bind:value={mqttConfig.mqttBroker}
-                  placeholder="192.168.1.100"
+                  placeholder="Leave blank to disable MQTT"
                   class="input input-sm input-bordered w-full"
-                  required
                 />
               </div>
               <div class="form-control">
@@ -331,7 +332,7 @@
             <div class="flex items-center justify-between py-2 px-3 bg-base-100 rounded-lg">
               <div>
                 <p class="font-medium text-sm text-base-content">Ignore NFC Tags</p>
-                <p class="text-xs text-base-content/70">Do not publish NFC tag events to MQTT</p>
+                <p class="text-xs text-base-content/70">Do not publish NFC tag events to MQTT or HTTP</p>
               </div>
               <input
                 type="checkbox"
