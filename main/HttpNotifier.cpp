@@ -25,7 +25,8 @@ void HttpNotifier::begin(const espConfig::misc_config_t& config) {
         [this](const uint8_t* data, size_t size) {
             if (!data || !size) return;
             std::error_code ec;
-            auto state = alpaca::deserialize<EventLockState>(std::span<const uint8_t>(data, size), ec);
+            std::span<const uint8_t> payload(data, size);
+            auto state = alpaca::deserialize<EventLockState>(payload, ec);
             // HomeKit: 0=unlocked, 1=locked. Ignore target-only, jammed and transitional states.
             int kind = HttpNotificationPolicy::lockEvent(state.currentState, state.prevState);
             if (!ec && kind >= 0) enqueue(static_cast<uint8_t>(kind));
