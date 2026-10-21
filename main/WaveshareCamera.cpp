@@ -3,7 +3,7 @@
 #ifdef CONFIG_HOMEKEY_WAVESHARE_CAMERA
 #include "GPIOAllocator.hpp"
 #include "esp_camera.h"
-#include "esp_psram.h"
+#include "esp_heap_caps.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <atomic>
@@ -26,7 +26,11 @@ esp_err_t unavailable(httpd_req_t* req) {
 
 void WaveshareCamera::begin() {
 #ifdef CONFIG_HOMEKEY_WAVESHARE_CAMERA
-    if (ready || !esp_psram_is_initialized()) return;
+    if (ready) return;
+    if (heap_caps_get_total_size(MALLOC_CAP_SPIRAM) == 0) {
+        ESP_LOGE("Camera", "PSRAM is unavailable; camera disabled");
+        return;
+    }
     // Board wiring: https://docs.waveshare.com/ESP32-S3-ETH/Development-Environment-Setup-Arduino
     const int inputs[] = {1, 2, 39, 18, 15, 38, 40, 42, 46, 45, 41};
     const int outputs[] = {8, 3, 48, 47};
