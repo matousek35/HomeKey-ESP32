@@ -224,3 +224,22 @@ upstream release `v0.9`; tento fork nadále zachovává dosavadní vývojový z�
 CI sestavuje oba firmwary a webové rozhraní. Host testy ověřují debounce a
 výběr HTTP událostí, expiraci a základní validaci URL. Funkční zkouška na
 ESP32/OV5640 a vašem Miniservéru zůstává nutná.
+
+
+## Testování na jiné desce ESP32-S3
+
+Artefakt **waveshare-wifi-test** je určený pro ESP32-S3 s alespoň 4 MB flash.
+Nevyžaduje PSRAM (nepoužívá ji), neobsahuje kamerový driver a nepoužívá pevné
+Waveshare přiřazení NFC/Ethernetu. HTTP události, webové nastavení a GPIO zvonek
+zůstávají dostupné; GPIO tlačítka je výchozí 16. Piny PN532 nastavte podle
+skutečného zapojení vlastní desky. Kamera v této variantě nejde zapnout.
+
+Na čisté instalaci je Ethernet vypnutý. Připojte se k Wi-Fi `HK_XXXXXXXX`
+heslem `HomeKey$123$` a otevřete `http://192.168.4.1`. Nastavte Wi-Fi domácí sítě.
+Ethernet lze následně zapnout v nastavení Hardware, ale vyžaduje skutečný externí
+Ethernet adaptér (např. W5500) a správné piny. Samotný ESP32-S3 Ethernet konektor nemá.
+
+Přes USB použijte `merged-binary.bin` z tohoto artefaktu na adrese 0x0.
+Kompletní merged obraz přepisuje i mezery obsahující NVS, proto počítejte se
+ztrátou konfigurace a párování. Naopak OTA pouze aplikace zachová dříve uloženou
+volbu Ethernetu; samotná změna výchozí hodnoty ji nevypne.
