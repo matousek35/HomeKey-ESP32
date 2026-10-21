@@ -158,7 +158,8 @@
 #define MISO_PIN 43
 #define MOSI_PIN 44
 #undef ETH_ENABLED
-#define ETH_ENABLED true
+// Start with Wi-Fi provisioning; enable Ethernet later in the web UI.
+#define ETH_ENABLED false
 #undef ETH_SPI_CONF_PIN_CS
 #undef ETH_SPI_CONF_PIN_IRQ
 #undef ETH_SPI_CONF_PIN_RST

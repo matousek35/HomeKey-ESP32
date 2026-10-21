@@ -79,6 +79,17 @@ Výchozí GPIO16, debounce 60 ms; menuconfig mění pouze výchozí hodnotu pro 
 
 ## První spuštění / již používaná deska
 
+Nová konfigurace má Ethernet **vypnutý**. Bez uložených Wi-Fi údajů se spustí
+konfigurační síť `HK_XXXXXXXX`, výchozí heslo `HomeKey$123$`. Připojte se k ní
+ a otevřete konfigurační portál; nastavte domácí Wi-Fi. Ethernet lze dodatečně
+zapnout v **Misc → Hardware** po nastavení typu adaptéru a pinů. Změna se použije
+po uložení a restartu. U Waveshare použijte W5500/SPI3 a piny uvedené výše.
+
+Změna výchozí hodnoty nepřepíše již uložené `ethernetEnabled=true` v NVS.
+Tento Waveshare build nadále vyžaduje ESP32-S3 s 16 MB flash a 8 MB OPI PSRAM;
+vypnutí Ethernetu z něj nedělá univerzální firmware pro jiné ESP desky.
+
+
 Profil nastavuje výchozí piny pouze při chybějící konfiguraci v NVS. Stará nastavení
 zůstanou zachována. V existující instalaci v nastavení hardwaru zkontrolujte:
 PN532 SPI, Custom pins SS=0, SCK=17, MISO=43, MOSI=44; Ethernet enabled,
