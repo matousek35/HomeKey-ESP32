@@ -361,3 +361,6 @@ Distribuce obsahuje `merged-binary.bin` pro kompletní instalaci,
 `HomeKey-ESP32.bin` pro OTA aplikace a `spiffs.bin` pro OTA webu. Pro nové
 formuláře aktualizujte aplikaci i web ze stejného buildu. Kompletní instalace
 přepisuje NVS a párování; běžná kompatibilní OTA je zachovává.
+
+Pro obecný ESP32-C6 build jsou ladicí výpisy hlavního komponentu omezené na INFO,
+aby se firmware vešel do původních OTA oddílů. ESP32-S3 profil se tím nemění.

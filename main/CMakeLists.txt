@@ -34,5 +34,11 @@ if(NOT DEFINED ENV{CI})
 else()
   littlefs_create_partition_image(spiffs ../data/dist FLASH_IN_PROJECT)
 endif()
-target_compile_definitions(${COMPONENT_LIB} PRIVATE "-DLOG_LOCAL_LEVEL=ESP_LOG_DEBUG")
+# C6 has the tightest application budget. Keep operational logs, omit debug
+# strings so the shared HTTP/MQTT feature still fits the existing OTA slots.
+if(CONFIG_IDF_TARGET_ESP32C6)
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE "-DLOG_LOCAL_LEVEL=ESP_LOG_INFO")
+else()
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE "-DLOG_LOCAL_LEVEL=ESP_LOG_DEBUG")
+endif()
 target_compile_definitions(${COMPONENT_LIB} PRIVATE "-DMSGPACK_ZONE_CHUNK_SIZE=1024")

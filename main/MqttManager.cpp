@@ -74,7 +74,11 @@ void MqttManager::end() {
  * @return true if the MQTT client was started successfully, false otherwise.
  */
 bool MqttManager::begin(std::string deviceID) {
-    { std::lock_guard lock(m_identifierMutex); this->deviceID = deviceID; }
+    {
+        std::lock_guard lock(m_identifierMutex);
+        // HAP identity is stable for this boot. Discovery reads it after client start.
+        if (this->deviceID.empty()) this->deviceID = deviceID;
+    }
     if (m_httpPublish) m_httpPublish(m_mqttConfig.lwtTopic, "online");
     if (m_client) return true;
     if (m_mqttConfig.mqttBroker.empty() || m_mqttConfig.mqttBroker == "0.0.0.0") {
