@@ -3,6 +3,9 @@
 #include "eventStructs.hpp"
 #include "mqtt_client.h"
 #include <string>
+#include <functional>
+#include <atomic>
+#include <mutex>
 #include <vector>
 
 class LockManager;
@@ -69,7 +72,14 @@ public:
       */
     void publish(const std::string& topic, const std::string& payload, int qos = 0, bool retain = false);
 
+    void setHttpPublisher(std::function<void(const std::string&, const std::string&)> callback) { m_httpPublish = std::move(callback); }
+    bool dispatchCommand(const std::string& topic, const std::string& payload);
+    std::string httpStatus() const;
 private:
+    void subscribeEvents();
+    std::function<void(const std::string&, const std::string&)> m_httpPublish;
+    std::atomic<uint8_t> m_currentState{1}, m_targetState{1};
+    AppEventLoop::SubscriptionHandle m_doorbell;
     /**
       * @brief Publishes the current state of the lock.
       * Called by the main application loop when a state change is detected.
@@ -110,6 +120,7 @@ private:
 
     // --- Member Variables ---
     std::string deviceID;
+    std::mutex m_identifierMutex;
     const espConfig::mqttConfig_t& m_mqttConfig;
     const espConfig::mqtt_ssl_t& m_mqttSslConfig;
     esp_mqtt_client_handle_t m_client;

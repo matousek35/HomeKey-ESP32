@@ -180,9 +180,13 @@ void setup() {
   }
 
   configManager.begin();
+  httpNotifier.begin(configManager.getConfig<espConfig::misc_config_t>(), configManager.getConfig<espConfig::mqttConfig_t>());
   hardwareManager = std::make_unique<HardwareManager>(configManager.getConfig<espConfig::actions_config_t>());
   lockManager = std::make_unique<LockManager>(configManager.getConfig<espConfig::misc_config_t>(), configManager.getConfig<espConfig::actions_config_t>());
   mqttManager = std::make_unique<MqttManager>(configManager);
+  mqttManager->setHttpPublisher([](const std::string& topic, const std::string& payload) {
+    httpNotifier.publish(topic, payload);
+  });
   automationEngine = std::make_unique<automation::AutomationEngine>(
       configManager, mqttManager.get(), lockManager.get());
   automationEngine->begin();
@@ -227,7 +231,6 @@ void setup() {
   webServerManager.setMqttManager(mqttManager.get());
   hardwareManager->begin();
   homekitLock->begin();
-  httpNotifier.begin(miscConfig);
   lockManager->begin();
   doorbellButton.begin(miscConfig);
   WaveshareCamera::begin(miscConfig);

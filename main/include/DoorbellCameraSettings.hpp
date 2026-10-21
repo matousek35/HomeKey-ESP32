@@ -18,7 +18,7 @@ inline std::string validateDoorbellCameraSettings(cJSON* saved, cJSON* changes) 
 #ifndef CONFIG_HOMEKEY_WAVESHARE_CAMERA
     if (enabled("cameraEnabled")) return "Install the camera firmware variant to enable the camera";
 #endif
-    for (const char* key : {"httpDoorbellUrl", "httpLockedUrl", "httpUnlockedUrl"}) {
+    for (const char* key : {"httpDoorbellUrl", "httpLockedUrl", "httpUnlockedUrl", "httpTopicUrl", "httpStateUrl", "httpCustomStateUrl", "httpAuthUrl", "httpAltActionUrl", "httpStatusUrl", "httpBellTopicUrl"}) {
         std::string url = value(key)->valuestring;
         if (url.empty()) continue;
         if (!HttpNotificationPolicy::validUrl(url))
@@ -29,6 +29,19 @@ inline std::string validateDoorbellCameraSettings(cJSON* saved, cJSON* changes) 
     if (enabled("httpNotifyEnabled") && !*value("httpDoorbellUrl")->valuestring &&
         !*value("httpLockedUrl")->valuestring && !*value("httpUnlockedUrl")->valuestring)
         return "Enter at least one HTTP notification URL";
+
+    if (enabled("httpApiEnabled") && !enabled("webAuthEnabled"))
+        return "Enable web authentication in Security before enabling HTTP commands";
+    if (enabled("httpMirrorEnabled")) {
+        bool destination = false;
+        for (const char* key : {"httpTopicUrl", "httpStateUrl", "httpCustomStateUrl", "httpAuthUrl", "httpAltActionUrl", "httpStatusUrl", "httpBellTopicUrl"}) {
+            std::string url = value(key)->valuestring;
+            destination |= !url.empty();
+            if (!url.empty() && !enabled("httpMirrorPost") && url.find("{payload}") == std::string::npos)
+                return std::string(key) + ": GET mapping requires {payload}; use POST for the original body";
+        }
+        if (!destination) return "Enter at least one topic mapping URL";
+    }
 
     struct Pin { const char* key; bool output; bool camera; };
     const Pin pins[] = {

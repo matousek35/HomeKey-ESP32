@@ -137,6 +137,7 @@ private:
   static esp_err_t handleHKReset(httpd_req_t *req);
   static esp_err_t handleWifiReset(httpd_req_t *req);
   static esp_err_t handleStartConfigAP(httpd_req_t *req);
+  static esp_err_t handleHttpMessage(httpd_req_t* req);
   static esp_err_t handleCameraSnapshot(httpd_req_t* req);
   static esp_err_t handleCameraStream(httpd_req_t* req);
   static esp_err_t handleRootOrHash(httpd_req_t *req);

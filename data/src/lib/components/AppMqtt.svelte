@@ -324,6 +324,9 @@
               </div>
             </div>
 
+            <label class="form-control block text-sm mb-3">Doorbell Topic (payload 1, not retained)
+              <input type="text" bind:value={mqttConfig.doorbellTopic} class="input input-sm input-bordered w-full" required />
+            </label>
             <!-- Ignore NFC Tags Toggle -->
             <div class="flex items-center justify-between py-2 px-3 bg-base-100 rounded-lg">
               <div>

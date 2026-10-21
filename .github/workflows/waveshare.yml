@@ -23,6 +23,8 @@ jobs:
           /tmp/button-test
           g++ -std=c++17 -Wall -Wextra -Werror -Imain/include tests/http_notification_policy.cpp -o /tmp/http-test
           /tmp/http-test
+          g++ -std=c++17 -Wall -Wextra -Werror -Imain/include tests/message_protocol.cpp -o /tmp/protocol-test
+          /tmp/protocol-test
       - name: Build web UI
         working-directory: data
         run: |

@@ -79,6 +79,7 @@ const ConfigManager::ConfigField ConfigManager::kConfigFields[ConfigManager::kFi
   F("mqtt", mqttConfig_t, lockTStateCmd, Str),
   F("mqtt", mqttConfig_t, btrLvlCmdTopic, Str),
   F("mqtt", mqttConfig_t, hkAltActionTopic, Str),
+  F("mqtt", mqttConfig_t, doorbellTopic, Str),
   F("mqtt", mqttConfig_t, lockCustomStateTopic, Str),
   F("mqtt", mqttConfig_t, lockCustomStateCmd, Str),
   F("mqtt", mqttConfig_t, lockEnableCustomState, Bool),
@@ -159,6 +160,17 @@ const ConfigManager::ConfigField ConfigManager::kConfigFields[ConfigManager::kFi
   F("misc", misc_config_t, httpUnlockedUrl, Str),
   F("misc", misc_config_t, httpUsername, Str),
   F("misc", misc_config_t, httpPassword, Str),
+  F("misc", misc_config_t, httpMirrorEnabled, Bool),
+  F("misc", misc_config_t, httpMirrorPost, Bool),
+  F("misc", misc_config_t, httpApiEnabled, Bool),
+  F("misc", misc_config_t, httpTopicUrl, Str),
+  F("misc", misc_config_t, httpStateUrl, Str),
+  F("misc", misc_config_t, httpCustomStateUrl, Str),
+  F("misc", misc_config_t, httpAuthUrl, Str),
+  F("misc", misc_config_t, httpAltActionUrl, Str),
+  F("misc", misc_config_t, httpStatusUrl, Str),
+  F("misc", misc_config_t, httpBellTopicUrl, Str),
+
 
   // --- actions (30) ---
   F("actions", actions_config_t, nfcNeopixelPin, U8),

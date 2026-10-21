@@ -50,6 +50,7 @@ export interface MqttConfig {
   btrLvlCmdTopic: string;
   /** HomeKey alternate action topic */
   hkAltActionTopic: string;
+  doorbellTopic: string;
   /** Custom lock state topic */
   lockCustomStateTopic: string;
   /** Custom lock state command topic */
@@ -231,6 +232,17 @@ export interface MiscConfig {
   httpUnlockedUrl: string;
   httpUsername: string;
   httpPassword: string;
+  httpMirrorEnabled: boolean;
+  httpMirrorPost: boolean;
+  httpApiEnabled: boolean;
+  httpTopicUrl: string;
+  httpStateUrl: string;
+  httpCustomStateUrl: string;
+  httpAuthUrl: string;
+  httpAltActionUrl: string;
+  httpStatusUrl: string;
+  httpBellTopicUrl: string;
+
 
 }
 

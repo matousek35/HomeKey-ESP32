@@ -104,6 +104,7 @@ namespace espConfig
       lockCustomStateCmd.append(id).append("/" MQTT_CUSTOM_STATE_CTRL_TOPIC);
       btrLvlCmdTopic.append(id).append("/" MQTT_PROX_BAT_TOPIC);
       hkAltActionTopic.append(id).append("/" MQTT_HK_ALT_ACTION_TOPIC);
+      doorbellTopic = id + "/homekit/doorbell";
       for (std::string* s : {&lwtTopic, &hkTopic, &lockStateTopic, &lockStateCmd,
                              &lockCStateCmd, &lockTStateCmd, &lockCustomStateTopic,
                              &lockCustomStateCmd, &btrLvlCmdTopic, &hkAltActionTopic}) {
@@ -125,6 +126,7 @@ namespace espConfig
     std::string lockTStateCmd;
     std::string btrLvlCmdTopic;
     std::string hkAltActionTopic;
+    std::string doorbellTopic;
     /* MQTT Custom State */
     std::string lockCustomStateTopic;
     std::string lockCustomStateCmd;
@@ -254,6 +256,17 @@ namespace espConfig
     bool httpNotifyEnabled = false;
     std::string httpDoorbellUrl, httpLockedUrl, httpUnlockedUrl;
     std::string httpUsername, httpPassword;
+    bool httpMirrorEnabled = false;
+    bool httpMirrorPost = false;
+    bool httpApiEnabled = false;
+    std::string httpTopicUrl;
+    std::string httpStateUrl;
+    std::string httpCustomStateUrl;
+    std::string httpAuthUrl;
+    std::string httpAltActionUrl;
+    std::string httpStatusUrl;
+    std::string httpBellTopicUrl;
+
 
   };
   struct actions_config_t {
