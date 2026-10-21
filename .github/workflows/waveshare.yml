@@ -1,0 +1,46 @@
+name: Waveshare doorbell and camera
+on:
+  workflow_dispatch:
+  push:
+    branches: [waveshare-doorbell-camera]
+permissions:
+  contents: read
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [doorbell, camera]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - uses: oven-sh/setup-bun@v2
+      - name: Test button debounce
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Imain/include tests/doorbell_debounce.cpp -o /tmp/button-test
+          /tmp/button-test
+      - name: Build web UI
+        working-directory: data
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+          find dist -type f \( -name '*.css' -o -name '*.js' \) -delete
+      - name: Build ESP32-S3 firmware
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.5.5
+          target: esp32s3
+          command: |
+            defaults='sdkconfig.defaults;profiles/waveshare.defaults'
+            if [ '${{ matrix.variant }}' = camera ]; then defaults="$defaults;profiles/camera.defaults"; fi
+            CI=true idf.py -DSDKCONFIG_DEFAULTS="$defaults" build merge-bin
+      - uses: actions/upload-artifact@v7
+        with:
+          name: waveshare-${{ matrix.variant }}
+          path: |
+            build/merged-binary.bin
+            build/HomeKey-ESP32.bin
+            build/flasher_args.json
+            build/sdkconfig

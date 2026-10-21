@@ -1,3 +1,4 @@
+#include "WaveshareCamera.hpp"
 // ============================================================================
 // WebServerManager.cpp - ESP32 Web Server Implementation
 // ============================================================================
@@ -269,7 +270,7 @@ void WebServerManager::begin() {
   bool isHttpsActive = !isApMode && shouldEnableHttps();
 
   httpd_ssl_config_t ssl_config = HTTPD_SSL_CONFIG_DEFAULT();
-  ssl_config.httpd.max_uri_handlers = 22;
+  ssl_config.httpd.max_uri_handlers = 24;
   ssl_config.httpd.max_open_sockets = 4;
   ssl_config.httpd.stack_size = 8192;
   ssl_config.httpd.uri_match_fn = httpd_uri_match_wildcard;
@@ -349,6 +350,7 @@ BaseType_t task;
   ESP_LOGI(TAG, "Web server initialization complete");
 
   m_isInitialized = true;
+  if (!isApMode) WaveshareCamera::startStream(handleCameraStream, this);
 }
 
 /**
@@ -362,6 +364,7 @@ void WebServerManager::end() {
 
   if(!m_isInitialized) return;
 
+  WaveshareCamera::stopStream();
   if (m_server) {
     httpd_ssl_stop(m_server);
     ESP_LOGI(TAG, "HTTP Server stopped!");
@@ -514,6 +517,8 @@ void WebServerManager::setupRoutes() {
       {"/certificates", HTTP_POST, handleCertificateUpload, this},
       {"/certificates", HTTP_GET, handleCertificateStatus, this},
       {"/certificates", HTTP_DELETE, handleCertificateDelete, this},
+
+      {"/camera.jpg", HTTP_GET, handleCameraSnapshot, this},
 
       // Catch-all (must be last)
       {"/*", HTTP_GET, handleRootOrHash, this}};
@@ -2823,4 +2828,17 @@ esp_err_t WebServerManager::handleCertificateDelete(httpd_req_t *req) {
   }
 
   return sendJsonError(req, "Failed to delete certificate", HTTPD_500);
+}
+
+
+esp_err_t WebServerManager::handleCameraSnapshot(httpd_req_t* req) {
+  auto* instance = getInstance(req);
+  if (!instance || !instance->basicAuth(req)) return sendAuthFailure(req);
+  return WaveshareCamera::snapshot(req);
+}
+
+esp_err_t WebServerManager::handleCameraStream(httpd_req_t* req) {
+  auto* instance = getInstance(req);
+  if (!instance || !instance->basicAuth(req)) return sendAuthFailure(req);
+  return WaveshareCamera::stream(req);
 }

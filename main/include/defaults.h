@@ -146,3 +146,29 @@
 #define KEYPAD_MIN_CODE_LENGTH 4 // Minimum access code length (1-16 digits)
 #define KEYPAD_MAX_CODE_LENGTH 16 // Maximum access code length (min-16 digits)
 #define KEYPAD_MAX_CODES 8 // Maximum number of stored access codes (1-255)
+
+
+#ifdef CONFIG_HOMEKEY_WAVESHARE_BOARD
+#undef SS_PIN
+#undef SCK_PIN
+#undef MISO_PIN
+#undef MOSI_PIN
+#define SS_PIN 0
+#define SCK_PIN 17
+#define MISO_PIN 43
+#define MOSI_PIN 44
+#undef ETH_ENABLED
+#define ETH_ENABLED true
+#undef ETH_SPI_CONF_PIN_CS
+#undef ETH_SPI_CONF_PIN_IRQ
+#undef ETH_SPI_CONF_PIN_RST
+#undef ETH_SPI_CONF_PIN_SCK
+#undef ETH_SPI_CONF_PIN_MISO
+#undef ETH_SPI_CONF_PIN_MOSI
+#define ETH_SPI_CONF_PIN_CS 14
+#define ETH_SPI_CONF_PIN_IRQ 10
+#define ETH_SPI_CONF_PIN_RST 9
+#define ETH_SPI_CONF_PIN_SCK 13
+#define ETH_SPI_CONF_PIN_MISO 12
+#define ETH_SPI_CONF_PIN_MOSI 11
+#endif

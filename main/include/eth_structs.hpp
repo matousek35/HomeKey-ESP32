@@ -77,5 +77,8 @@ namespace eth_config_ns {
                           .ethChip = supportedChips.at(ETH_PHY_LAN8720),
                           .rmii_conf{0, 23, 18, -1, ETH_CLOCK_GPIO17_OUT}},
   #endif
+      eth_board_presets_t{.name = "Waveshare ESP32-S3-ETH",
+                          .ethChip = supportedChips.at(ETH_PHY_W5500),
+                          .spi_conf{20, 14, 10, 9, 13, 12, 11}},
   };
 }; // namespace eth_config_ns

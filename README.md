@@ -1,3 +1,5 @@
+> **Waveshare + PN532 + GPIO doorbell + OV5640 for Loxone:** [Český návod: zapojení, build, Loxone](BUILD-WAVESHARE-CS.md).
+
 <div align="center">
   <img width="169" height="200" alt="homekey-logo-200x200" src="https://github.com/user-attachments/assets/6c4bc1e8-c294-4a4b-842a-9837a680b913" />
 
