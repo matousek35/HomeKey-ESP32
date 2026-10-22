@@ -20,6 +20,8 @@ Každý release obsahuje kompletní USB obraz, OTA aplikaci a OTA web pro všech
 
 ## Nastavení
 
+Od `loxone-v1.0.1` se zvonek a kamera při chybějícím uloženém nastavení samy nezapínají. To chrání stávající zapojení při OTA; například GPIO16 může být použito pro PN532 MOSI. Uložené piny NFC a Ethernetu se při kompatibilní OTA zachovávají.
+
 **Misc → Hardware** sdružuje čtečku, Ethernet, zvonek a kameru včetně pinů a přepínačů. **MQTT / HTTP** sdružuje broker, společné topicy, TLS, odchozí HTTP a příchozí HTTP API. MQTT a HTTP mohou běžet samostatně i současně; payloady vznikají společně. HTTP nemá MQTT retain, QoS ani offline last will.
 
 Zvonek standardně publikuje `PREFIX/homekit/doorbell` s hodnotou `1`. HTTP API přijímá stejné příkazy jako MQTT. Stav zavřených dveří a stav zamčeného zámku nejsou totéž; podrobnosti a příklady jsou v integračním návodu.

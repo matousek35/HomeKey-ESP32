@@ -77,6 +77,8 @@ Zdroje: [Waveshare pinout a schéma](https://docs.waveshare.com/ESP32-S3-ETH/Res
 
 ## Vypnutí funkcí a změna pinů
 
+Od v1.0.1 jsou při chybějícím uloženém nastavení kamera i GPIO zvonek vypnuté. Zapněte je až po ověření zapojení. Uložené hodnoty přepínačů se zachovávají.
+
 V **Misc → Hardware** jsou samostatné přepínače **Enable GPIO doorbell** a
 **Enable camera** a seznam všech 15 kamerových signálů včetně napájecího enable.
 Uložením se zařízení restartuje; vypnutá funkce si po restartu nezabere GPIO.

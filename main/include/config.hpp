@@ -223,16 +223,11 @@ namespace espConfig
     uint8_t keypadMaxCodeLength = KEYPAD_MAX_CODE_LENGTH;
     uint8_t keypadMaxCodes = KEYPAD_MAX_CODES;
 
-#ifdef CONFIG_HOMEKEY_DOORBELL
-    bool doorbellEnabled = true;
-#else
+// New peripherals must be explicitly enabled after an OTA migration.
+    // In particular GPIO16 may already be the existing PN532 MOSI pin.
+    // Stored values, if present, are restored by ConfigManager as before.
     bool doorbellEnabled = false;
-#endif
-#ifdef CONFIG_HOMEKEY_WAVESHARE_CAMERA
-    bool cameraEnabled = true;
-#else
     bool cameraEnabled = false;
-#endif
 #ifdef CONFIG_HOMEKEY_DOORBELL
     uint8_t doorbellGpio = CONFIG_HOMEKEY_DOORBELL_GPIO;
 #else

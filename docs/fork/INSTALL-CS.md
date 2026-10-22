@@ -10,6 +10,8 @@ Stahujte z [Releases](https://github.com/matousek35/HomeKey-ESP32/releases). Vyb
 
 Všechny varianty podporují PN532, GPIO zvonek, MQTT a obousměrné HTTP. Nová konfigurace má Ethernet vypnutý; lze jej zapnout později v Hardware. Stávající konfigurace se při OTA zachovává.
 
+Od verze **loxone-v1.0.1** jsou nové funkce zvonku a kamery ve výchozím stavu vypnuté. Existující uložené přepínače se při OTA zachovávají. Varianta `waveshare-wifi-test` podporuje také nakonfigurovaný Ethernet a nepoužívá PSRAM.
+
 ## Aktualizace přes web OTA
 
 Pro dosavadní nešifrované instalace tohoto forku se stejným `with_ota.csv`:
@@ -49,6 +51,6 @@ Připojte se k Wi-Fi `HK_XXXXXXXX`, heslo `HomeKey$123$`, a otevřete `http://19
 - **MQTT / HTTP → HTTP:** jednoduché notifikace, shodné topic/payload zprávy a příchozí povely.
 - **Misc → Security:** webové přihlášení, povinné pro příchozí HTTP API.
 
-Uložení nastavení restartuje zařízení. Před změnou další komunikační sekce uložte aktuální sekci. Výchozí GPIO zvonku je 16: krátce spojte GPIO16 s GND. Číslo znamená GPIO, nikoliv pořadí pinu na konektoru. Přiřazení musí odpovídat vaší desce.
+Uložení nastavení restartuje zařízení. Před změnou další komunikační sekce uložte aktuální sekci. Výchozí GPIO zvonku je 16; nejdříve ověřte, že jej nepoužívá čtečka ani jiná funkce, a zvonek zapněte: krátce spojte GPIO16 s GND. Číslo znamená GPIO, nikoliv pořadí pinu na konektoru. Přiřazení musí odpovídat vaší desce.
 
 Při použití Waveshare zapněte Ethernet až se správným nastavením W5500/SPI3. Vypnutí Ethernetu nezmění hardwarové nároky kamerové binárky; na desku 8 MB / 2 MB používejte `waveshare-wifi-test`.
