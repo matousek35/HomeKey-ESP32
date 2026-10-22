@@ -2,7 +2,7 @@ name: Firmware and Releases
 on:
   workflow_dispatch:
   push:
-    branches: [main, waveshare-doorbell-camera]
+    branches: [main]
   pull_request:
     branches: [main]
 permissions:

@@ -19,6 +19,11 @@ execute_process(
 if(GIT_EXACT_TAG MATCHES "^dev" AND GIT_COMMIT_HASH)
     set(PROJECT_VER "${GIT_COMMIT_HASH}")
 endif()
+# Keep release builds identifiable even before the release tag is created.
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/VERSION")
+    file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/VERSION" FORK_VERSION LIMIT_COUNT 1)
+    set(PROJECT_VER "${FORK_VERSION}+${GIT_COMMIT_HASH}")
+endif()
 idf_build_set_property(MINIMAL_BUILD ON)
 project(HomeKey-ESP32)
 idf_build_get_property(IDF_TARGET IDF_TARGET)

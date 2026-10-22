@@ -561,7 +561,7 @@
 
       <!-- Action Buttons -->
       <div class="flex gap-3 mt-6">
-        <button type="submit" class="btn btn-primary">Save & Apply changes</button>
+        <button type="submit" class="btn btn-primary">Save {activeTab === 'http' ? 'HTTP' : 'MQTT'} & Apply changes</button>
         <button type="button" class="btn btn-ghost" onclick={resetForm}>Reset</button>
       </div>
     </form>
