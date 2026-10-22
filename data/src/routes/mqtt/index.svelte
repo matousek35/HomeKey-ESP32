@@ -3,4 +3,4 @@
 	import { route } from 'sv-router/generated';
 </script>
 
-<AppMqtt mqtt={route.meta.mqttData?.mqtt} error={route.meta.mqttData?.error} />
+<AppMqtt mqtt={route.meta.mqttData?.mqtt} misc={route.meta.mqttData?.misc} error={route.meta.mqttData?.error} />

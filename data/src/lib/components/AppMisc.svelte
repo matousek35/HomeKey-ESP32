@@ -34,7 +34,7 @@
 		error = $bindable() 
 	}: Props = $props();
 
-	let activeTab = $state<'homekit' | 'hardware' | 'keypad' | 'doorbell' | 'network' | 'security'>('homekit');
+	let activeTab = $state<'homekit' | 'hardware' | 'keypad' | 'network' | 'security'>('homekit');
 
 	// svelte-ignore state_referenced_locally
 	let miscConfig = $state<MiscConfig>($state.snapshot(misc));
@@ -291,7 +291,6 @@
 
 			<!-- Tabs -->
 			<div class="flex bg-base-300 p-1 rounded-xl gap-1">
-        <button type="button" class="flex-1 tab rounded-lg text-xs {activeTab === 'doorbell' ? 'bg-base-100 text-primary font-medium shadow-sm' : 'text-base-content/60'}" onclick={() => activeTab = 'doorbell'}>Doorbell / Camera</button>
 				<button
 					type="button"
 					class="flex-1 tab flex-col py-2 rounded-lg transition-colors {activeTab === 'homekit' ? 'bg-base-100 text-primary font-medium shadow-sm' : 'text-base-content/60 hover:bg-base-200'}"
@@ -420,7 +419,7 @@
 								<div class="flex items-center justify-between py-2 px-3 bg-base-100 rounded-lg">
 									<div>
 										<p class="text-sm font-medium">SmartLock Battery Reporting</p>
-										<p class="text-xs text-base-content/60">Enable battery level reporting from the physical lock (via MQTT) to HomeKit</p>
+										<p class="text-xs text-base-content/60">Enable battery level reporting from the physical lock (via MQTT / HTTP) to HomeKit</p>
 									</div>
 									<input
 										type="checkbox"
@@ -461,11 +460,7 @@
 						</div>
 					{/if}
 
-					{#if activeTab === 'doorbell'}
-            <DoorbellCameraConfig bind:config={miscConfig} />
-          {/if}
-
-					{#if activeTab === 'hardware'}
+{#if activeTab === 'hardware'}
 						<div class="space-y-4">
 							<div>
 								<h3 class="text-sm font-semibold">Hardware Configuration</h3>
@@ -490,6 +485,8 @@
 								bind:nfcFastPollingEnabled={miscConfig.nfcFastPollingEnabled}
                 bind:overrideStrappingRestriction={miscConfig.overrideStrappingRestriction}
 							/>
+
+							<DoorbellCameraConfig bind:config={miscConfig} />
 
 							<!-- HomeSpan -->
 							<div class="py-2 px-3 bg-base-100 rounded-lg">

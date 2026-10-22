@@ -1,8 +1,10 @@
-name: Waveshare doorbell and camera
+name: Firmware and Releases
 on:
   workflow_dispatch:
   push:
-    branches: [waveshare-doorbell-camera]
+    branches: [main, waveshare-doorbell-camera]
+  pull_request:
+    branches: [main]
 permissions:
   contents: read
 jobs:
@@ -46,3 +48,24 @@ jobs:
             build/spiffs.bin
             build/flasher_args.json
             build/sdkconfig
+
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: firmware
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: firmware-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+      - name: Package release
+        run: python3 scripts/package-release.py
+      - name: Publish versioned release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/publish-release.sh
