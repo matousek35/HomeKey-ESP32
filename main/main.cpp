@@ -11,6 +11,9 @@
 #include "ConfigManager.hpp"
 #include "ReaderDataManager.hpp"
 #include "HardwareManager.hpp"
+#include "DoorbellButton.hpp"
+#include "HttpNotifier.hpp"
+#include "WaveshareCamera.hpp"
 #include "MqttManager.hpp"
 #include "automation/AutomationEngine.hpp"
 #include "WebServerManager.hpp"
@@ -37,6 +40,8 @@ std::unique_ptr<NfcManager> nfcManager;
 static dns_server_handle_t dns_server = NULL;
 
 bool pollHS = false;
+DoorbellButton doorbellButton;
+HttpNotifier httpNotifier;
 
 static void dhcp_set_captiveportal_url(void) {
     esp_netif_ip_info_t ip_info;
@@ -175,9 +180,13 @@ void setup() {
   }
 
   configManager.begin();
+  httpNotifier.begin(configManager.getConfig<espConfig::misc_config_t>(), configManager.getConfig<espConfig::mqttConfig_t>());
   hardwareManager = std::make_unique<HardwareManager>(configManager.getConfig<espConfig::actions_config_t>());
   lockManager = std::make_unique<LockManager>(configManager.getConfig<espConfig::misc_config_t>(), configManager.getConfig<espConfig::actions_config_t>());
   mqttManager = std::make_unique<MqttManager>(configManager);
+  mqttManager->setHttpPublisher([](const std::string& topic, const std::string& payload) {
+    httpNotifier.publish(topic, payload);
+  });
   automationEngine = std::make_unique<automation::AutomationEngine>(
       configManager, mqttManager.get(), lockManager.get());
   automationEngine->begin();
@@ -223,6 +232,8 @@ void setup() {
   hardwareManager->begin();
   homekitLock->begin();
   lockManager->begin();
+  doorbellButton.begin(miscConfig);
+  WaveshareCamera::begin(miscConfig);
   pollHS = true;
 }
 /**
@@ -233,7 +244,9 @@ void setup() {
  */
 
 void loop() {
-  if(pollHS)
+  if(pollHS) {
+    doorbellButton.poll();
     homeSpan.poll();
+  }
   vTaskDelay(pdMS_TO_TICKS(50));
 }

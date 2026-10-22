@@ -7,3 +7,40 @@ menu "Arduino subsystem serial logging"
     bool "Initialize serial logging for the Arduino subsystem and by extent for HomeSpan"
     default y
 endmenu
+
+menu "HomeKey doorbell and Waveshare camera"
+  config HOMEKEY_DOORBELL
+    bool "Enable a standalone GPIO doorbell button"
+    default n
+    help
+      Normally-open dry contact between GPIO and GND, internal pull-up.
+      Publishes the existing keypad doorbell event. Does not unlock the door.
+  config HOMEKEY_DOORBELL_GPIO
+    int "Doorbell GPIO"
+    depends on HOMEKEY_DOORBELL
+    range 0 48
+    default 16
+  config HOMEKEY_DOORBELL_DEBOUNCE_MS
+    int "Stable press/release time (ms)"
+    depends on HOMEKEY_DOORBELL
+    range 20 1000
+    default 60
+  config HOMEKEY_WAVESHARE_CAMERA
+    bool "Enable Waveshare ESP32-S3-ETH camera JPEG/MJPEG"
+    depends on IDF_TARGET_ESP32S3 && SPIRAM
+    default n
+    help
+      OV5640/OV2640 JPEG capture on the Waveshare camera connector.
+      GET /camera.jpg and HTTP port 81 /stream use web authentication.
+      This is not a native HomeKit video or HomeKit Secure Video service.
+endmenu
+
+config HOMEKEY_WAVESHARE_BOARD
+    bool "Waveshare ESP32-S3-ETH with PN532 board defaults"
+    depends on IDF_TARGET_ESP32S3
+    default n
+    help
+      Fresh-NVS defaults: W5500 SPI3 on 13/12/11, CS 14, IRQ 10, reset 9.
+      PN532 SPI2: CS 0, SCK 17, MISO 43, MOSI 44. Use USB serial logging.
+      Add a 10k pull-up from GPIO0 to 3.3V; do not hold BOOT when running.
+      Existing NVS is preserved.

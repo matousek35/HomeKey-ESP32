@@ -49,6 +49,7 @@ LockManager::LockManager(const espConfig::misc_config_t& miscConfig, const espCo
       EventLockState s = alpaca::deserialize<EventLockState>(payload, ec);
       if(ec) { ESP_LOGE(TAG, "Failed to deserialize update state event: %s", ec.message().c_str()); return; }
       ESP_LOGD(TAG, "Received update state event: %d -> %d", s.currentState, s.targetState);
+      if (s.currentState == m_currentState) return;
       s.prevState = m_currentState;
       m_currentState = s.currentState;
       s.targetState = m_targetState;

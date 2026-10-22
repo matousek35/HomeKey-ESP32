@@ -39,11 +39,17 @@ inline constexpr uint8_t STRAPPING_PINS[] = {
 #elifdef CONFIG_IDF_TARGET_ESP32S3
 #if defined(CONFIG_ESPTOOLPY_OCT_FLASH) || defined(CONFIG_SPIRAM_MODE_OCT)
 inline constexpr uint8_t RESTRICTED_PINS[] = {
-  19, 20, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 43, 44
+  19, 20, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37
+#if !defined(CONFIG_HOMEKEY_WAVESHARE_BOARD) || !defined(CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG) || !defined(CONFIG_ARDUINO_USE_USB_JTAG)
+  , 43, 44
+#endif
 };
 #else
 inline constexpr uint8_t RESTRICTED_PINS[] = {
-  19, 20, 26, 27, 28, 29, 30, 31, 32, 43, 44
+  19, 20, 26, 27, 28, 29, 30, 31, 32
+#if !defined(CONFIG_HOMEKEY_WAVESHARE_BOARD) || !defined(CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG) || !defined(CONFIG_ARDUINO_USE_USB_JTAG)
+  , 43, 44
+#endif
 };
 #endif
 inline constexpr uint8_t STRAPPING_PINS[] = {
@@ -72,7 +78,8 @@ public:
     Hardware,
     Nfc,
     Eth,
-    HomeKit
+    HomeKit,
+    DoorbellCamera
   };
 
   enum class PinRole : uint8_t {
@@ -219,6 +226,7 @@ public:
       case PinConsumer::Nfc:      return "Nfc";
       case PinConsumer::Eth:      return "Eth";
       case PinConsumer::HomeKit:  return "HomeKit";
+      case PinConsumer::DoorbellCamera: return "Doorbell/Camera";
     }
     return "Unknown";
   }

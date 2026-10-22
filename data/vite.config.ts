@@ -41,21 +41,9 @@ export default defineConfig(({ mode }) => {
       target: 'es2020',
       rolldownOptions: {
         output: {
-          codeSplitting: {
-            minSize: 10000,
-            groups: [
-              {
-                name: 'vendor',
-                test: /node_modules/,
-                priority: 2,
-              },
-              {
-                name: 'components',
-                test: /src\/lib\/components/,
-                priority: 1,
-              }
-            ],
-          },
+          // A single JS asset avoids per-file LittleFS block overhead in the
+          // existing 128 KiB UI partition and compresses shared code together.
+          codeSplitting: false,
           minify: true,
           polyfillRequire: false,
         }

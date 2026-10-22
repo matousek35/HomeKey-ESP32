@@ -104,6 +104,7 @@ namespace espConfig
       lockCustomStateCmd.append(id).append("/" MQTT_CUSTOM_STATE_CTRL_TOPIC);
       btrLvlCmdTopic.append(id).append("/" MQTT_PROX_BAT_TOPIC);
       hkAltActionTopic.append(id).append("/" MQTT_HK_ALT_ACTION_TOPIC);
+      doorbellTopic = id + "/homekit/doorbell";
       for (std::string* s : {&lwtTopic, &hkTopic, &lockStateTopic, &lockStateCmd,
                              &lockCStateCmd, &lockTStateCmd, &lockCustomStateTopic,
                              &lockCustomStateCmd, &btrLvlCmdTopic, &hkAltActionTopic}) {
@@ -125,6 +126,7 @@ namespace espConfig
     std::string lockTStateCmd;
     std::string btrLvlCmdTopic;
     std::string hkAltActionTopic;
+    std::string doorbellTopic;
     /* MQTT Custom State */
     std::string lockCustomStateTopic;
     std::string lockCustomStateCmd;
@@ -220,6 +222,52 @@ namespace espConfig
     uint8_t keypadMinCodeLength = KEYPAD_MIN_CODE_LENGTH;
     uint8_t keypadMaxCodeLength = KEYPAD_MAX_CODE_LENGTH;
     uint8_t keypadMaxCodes = KEYPAD_MAX_CODES;
+
+#ifdef CONFIG_HOMEKEY_DOORBELL
+    bool doorbellEnabled = true;
+#else
+    bool doorbellEnabled = false;
+#endif
+#ifdef CONFIG_HOMEKEY_WAVESHARE_CAMERA
+    bool cameraEnabled = true;
+#else
+    bool cameraEnabled = false;
+#endif
+#ifdef CONFIG_HOMEKEY_DOORBELL
+    uint8_t doorbellGpio = CONFIG_HOMEKEY_DOORBELL_GPIO;
+#else
+    uint8_t doorbellGpio = 16;
+#endif
+    uint8_t cameraPowerGpio = 8;
+    uint8_t cameraXclkGpio = 3;
+    uint8_t cameraSdaGpio = 48;
+    uint8_t cameraSclGpio = 47;
+    uint8_t cameraD0Gpio = 41;
+    uint8_t cameraD1Gpio = 45;
+    uint8_t cameraD2Gpio = 46;
+    uint8_t cameraD3Gpio = 42;
+    uint8_t cameraD4Gpio = 40;
+    uint8_t cameraD5Gpio = 38;
+    uint8_t cameraD6Gpio = 15;
+    uint8_t cameraD7Gpio = 18;
+    uint8_t cameraVsyncGpio = 1;
+    uint8_t cameraHrefGpio = 2;
+    uint8_t cameraPclkGpio = 39;
+    bool httpNotifyEnabled = false;
+    std::string httpDoorbellUrl, httpLockedUrl, httpUnlockedUrl;
+    std::string httpUsername, httpPassword;
+    bool httpMirrorEnabled = false;
+    bool httpMirrorPost = false;
+    bool httpApiEnabled = false;
+    std::string httpTopicUrl;
+    std::string httpStateUrl;
+    std::string httpCustomStateUrl;
+    std::string httpAuthUrl;
+    std::string httpAltActionUrl;
+    std::string httpStatusUrl;
+    std::string httpBellTopicUrl;
+
+
   };
   struct actions_config_t {
     enum colorMap

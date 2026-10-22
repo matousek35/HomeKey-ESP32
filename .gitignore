@@ -13,3 +13,8 @@ gha-creds-*.json
 docs/public
 .direnv/
 build-*/
+# Local packaging and Python caches
+release-dist/
+artifacts/
+__pycache__/
+.DS_Store

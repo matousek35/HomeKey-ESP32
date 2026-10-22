@@ -13,6 +13,7 @@
 		type NfcGpioPinsPreset,
 	} from "$lib/types/api";
 	import { diff } from "$lib/utils/objDiff";
+	import DoorbellCameraConfig from "$lib/components/DoorbellCameraConfig.svelte";
 	import HardwareConfig from "$lib/components/HardwareConfig.svelte";
 	import CertManager from "$lib/components/CertManager.svelte";
 	import PairingQR from "$lib/components/PairingQR.svelte";
@@ -418,7 +419,7 @@
 								<div class="flex items-center justify-between py-2 px-3 bg-base-100 rounded-lg">
 									<div>
 										<p class="text-sm font-medium">SmartLock Battery Reporting</p>
-										<p class="text-xs text-base-content/60">Enable battery level reporting from the physical lock (via MQTT) to HomeKit</p>
+										<p class="text-xs text-base-content/60">Enable battery level reporting from the physical lock (via MQTT / HTTP) to HomeKit</p>
 									</div>
 									<input
 										type="checkbox"
@@ -459,7 +460,7 @@
 						</div>
 					{/if}
 
-					{#if activeTab === 'hardware'}
+{#if activeTab === 'hardware'}
 						<div class="space-y-4">
 							<div>
 								<h3 class="text-sm font-semibold">Hardware Configuration</h3>
@@ -484,6 +485,8 @@
 								bind:nfcFastPollingEnabled={miscConfig.nfcFastPollingEnabled}
                 bind:overrideStrappingRestriction={miscConfig.overrideStrappingRestriction}
 							/>
+
+							<DoorbellCameraConfig bind:config={miscConfig} />
 
 							<!-- HomeSpan -->
 							<div class="py-2 px-3 bg-base-100 rounded-lg">

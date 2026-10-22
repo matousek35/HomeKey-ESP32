@@ -1,15 +1,18 @@
 <script lang="ts">
-  import { type MqttConfig, CertificateType } from '$lib/types/api';
+  import { type MqttConfig, type MiscConfig, CertificateType } from '$lib/types/api';
   import { saveConfig } from '$lib/services/api';
   import { diff } from '$lib/utils/objDiff';
+  import HttpConfig from './HttpConfig.svelte';
   import CertManager from './CertManager.svelte';
   import { systemInfo } from '$lib/stores/system.svelte';
 
-  let { mqtt, error }: { mqtt: MqttConfig; error: string | null } = $props();
+  let { mqtt, misc, error }: { mqtt: MqttConfig; misc: MiscConfig; error: string | null } = $props();
 
   // svelte-ignore state_referenced_locally
   let mqttConfig = $state<MqttConfig>($state.snapshot(mqtt));
-  let activeTab = $state<'broker' | 'topics' | 'ssl'>('broker');
+  // svelte-ignore state_referenced_locally
+  let miscConfig = $state<MiscConfig>($state.snapshot(misc));
+  let activeTab = $state<'broker' | 'topics' | 'ssl' | 'http'>('broker');
 
   let mqttConnected = $derived<boolean>(systemInfo.mqtt_connected);
   let mqttErrorCode = $derived<number>(systemInfo.mqtt_error_code);
@@ -18,6 +21,12 @@
   const saveMqttConfig = async (e: Event) => {
     e.preventDefault();
     try {
+      if (activeTab === 'http') {
+        if (!miscConfig || !misc) return;
+        const result = await saveConfig('misc', diff(misc, miscConfig));
+        if (result.success) { miscConfig = result.data; misc = result.data; }
+        return;
+      }
       if (!mqttConfig || !mqtt) return;
       const result = await saveConfig('mqtt', diff(mqtt as MqttConfig, mqttConfig));
       if (result.success) {
@@ -31,6 +40,7 @@
   };
 
   const resetForm = () => {
+    if (activeTab === 'http') { if (misc) miscConfig = $state.snapshot(misc); return; }
     if (mqtt) mqttConfig = $state.snapshot(mqtt);
   };
 </script>
@@ -39,14 +49,14 @@
   <!-- Header -->
   <div class="mb-6">
     <h1 class="text-2xl font-bold text-base-content flex items-center gap-2">
-      MQTT Settings
+      MQTT / HTTP Settings
       <div class="tooltip tooltip-bottom tooltip-info" data-tip="Device will reboot to apply changes!">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-info">
           <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
         </svg>
       </div>
     </h1>
-    <p class="text-sm text-base-content/60">Configure MQTT broker connection and topic mappings.</p>
+    <p class="text-sm text-base-content/60">Configure MQTT and HTTP. Topics and NFC filtering apply to both protocols. Save HTTP settings separately before changing another section.</p>
   </div>
 
   {#if !mqtt && error}
@@ -87,11 +97,15 @@
           </svg>
           <span class="text-[10px] sm:text-xs mt-0.5">SSL/TLS</span>
         </button>
+        <button type="button" class="flex-1 tab rounded-lg text-xs {activeTab === 'http' ? 'bg-base-100 text-primary font-medium shadow-sm' : 'text-base-content/60'}" onclick={() => activeTab = 'http'}>HTTP</button>
       </div>
 
       <!-- Tab Content -->
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body p-4">
+        {#if activeTab === 'http' && miscConfig}
+          <HttpConfig bind:config={miscConfig} />
+        {/if}
         {#if activeTab === 'broker'}
           <!-- Broker Configuration -->
           <div class="space-y-6">
@@ -105,7 +119,9 @@
               <div class="flex items-center gap-2">
                 <span class="inline-flex h-3 w-3 rounded-full {mqttConnected === true ? 'bg-success' : mqttConnected === false ? (mqttErrorCode > 0 ? 'bg-error' : 'bg-warning') : 'bg-base-300'}"></span>
                 <span class="text-sm font-medium">
-                  {#if mqttConnected === true}
+                  {#if !mqttConfig.mqttBroker || mqttConfig.mqttBroker === "0.0.0.0"}
+                    <span class="text-base-content/60">Disabled</span>
+                  {:else if mqttConnected === true}
                     <span class="text-success">Connected</span>
                   {:else if mqttConnected === false}
                     {#if mqttErrorCode > 0}
@@ -135,9 +151,8 @@
                 <input
                   type="text"
                   bind:value={mqttConfig.mqttBroker}
-                  placeholder="192.168.1.100"
+                  placeholder="Leave blank to disable MQTT"
                   class="input input-sm input-bordered w-full"
-                  required
                 />
               </div>
               <div class="form-control">
@@ -324,11 +339,14 @@
               </div>
             </div>
 
+            <label class="form-control block text-sm mb-3">Doorbell Topic (payload 1, not retained)
+              <input type="text" bind:value={mqttConfig.doorbellTopic} class="input input-sm input-bordered w-full" required />
+            </label>
             <!-- Ignore NFC Tags Toggle -->
             <div class="flex items-center justify-between py-2 px-3 bg-base-100 rounded-lg">
               <div>
                 <p class="font-medium text-sm text-base-content">Ignore NFC Tags</p>
-                <p class="text-xs text-base-content/70">Do not publish NFC tag events to MQTT</p>
+                <p class="text-xs text-base-content/70">Do not publish NFC tag events to MQTT or HTTP</p>
               </div>
               <input
                 type="checkbox"
@@ -543,7 +561,7 @@
 
       <!-- Action Buttons -->
       <div class="flex gap-3 mt-6">
-        <button type="submit" class="btn btn-primary">Save & Apply changes</button>
+        <button type="submit" class="btn btn-primary">Save {activeTab === 'http' ? 'HTTP' : 'MQTT'} & Apply changes</button>
         <button type="button" class="btn btn-ghost" onclick={resetForm}>Reset</button>
       </div>
     </form>

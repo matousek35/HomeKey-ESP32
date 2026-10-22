@@ -213,6 +213,12 @@ void HomeKitLock::begin() {
       new NFCAccessService(m_readerDataManager);
       if(miscConfig.keypadEnabled && m_accessCodeManager) {
           new AccessCodeService(*m_accessCodeManager);
+      }
+      bool standaloneDoorbell = false;
+#ifdef CONFIG_HOMEKEY_DOORBELL
+      standaloneDoorbell = miscConfig.doorbellEnabled;
+#endif
+      if ((miscConfig.keypadEnabled && m_accessCodeManager) || standaloneDoorbell) {
           m_doorbell = new DoorbellService();
           m_doorbell_event = AppEventLoop::subscribe(KEYPAD_EVENT, KEYPAD_DOORBELL, [&](const uint8_t* data, size_t size){
               ESP_LOGI(TAG, "Doorbell pressed, notifying HomeKit controllers.");

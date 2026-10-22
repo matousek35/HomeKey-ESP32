@@ -1,10 +1,10 @@
 idf_component_register(SRCS "main.cpp" "app_events.cpp" "app_event_loop.cpp" "ConfigManager.cpp" "ReaderDataManager.cpp"
-                    "HardwareManager.cpp" "HomeKitLock.cpp" "LockManager.cpp"
+                    "HttpNotifier.cpp" "DoorbellButton.cpp" "WaveshareCamera.cpp" "HardwareManager.cpp" "HomeKitLock.cpp" "LockManager.cpp"
                     "MqttManager.cpp" "HKServices.cpp" "NfcManager.cpp" "Pn532Reader.cpp" "Pn7160Reader.cpp" "St25r3916Reader.cpp" "WebServerManager.cpp" "WebSocketLogSinker.cpp"
                     "ConsoleLogSinker.cpp" "GPIOAllocator.cpp" "EthernetDriver.cpp" "KeypadManager.cpp" "AccessCodeManager.cpp"
                     "NvsSecEarlyInit.cpp" "AutomationEngine.cpp"
                     INCLUDE_DIRS "include"
-                    PRIV_REQUIRES HomeSpan pn532_hal pn7160 DigitalDoorKey esp_https_server mqtt libsodium
+                    PRIV_REQUIRES esp_http_client mbedtls HomeSpan pn532_hal pn7160 DigitalDoorKey esp_https_server mqtt libsodium
                     msgpack-c json loggable loggable_espidf esp_wifi dns_server esp_driver_gpio nvs_sec_provider)
 
 if(CONFIG_NVS_SEC_KEY_PROTECT_USING_FLASH_ENC)
@@ -34,5 +34,11 @@ if(NOT DEFINED ENV{CI})
 else()
   littlefs_create_partition_image(spiffs ../data/dist FLASH_IN_PROJECT)
 endif()
-target_compile_definitions(${COMPONENT_LIB} PRIVATE "-DLOG_LOCAL_LEVEL=ESP_LOG_DEBUG")
+# C6 has the tightest application budget. Keep operational logs, omit debug
+# strings so the shared HTTP/MQTT feature still fits the existing OTA slots.
+if(CONFIG_IDF_TARGET_ESP32C6)
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE "-DLOG_LOCAL_LEVEL=ESP_LOG_INFO")
+else()
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE "-DLOG_LOCAL_LEVEL=ESP_LOG_DEBUG")
+endif()
 target_compile_definitions(${COMPONENT_LIB} PRIVATE "-DMSGPACK_ZONE_CHUNK_SIZE=1024")

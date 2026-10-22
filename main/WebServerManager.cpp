@@ -1,3 +1,6 @@
+#include "WaveshareCamera.hpp"
+#include "DoorbellCameraSettings.hpp"
+#include "MessageProtocol.hpp"
 // ============================================================================
 // WebServerManager.cpp - ESP32 Web Server Implementation
 // ============================================================================
@@ -269,7 +272,7 @@ void WebServerManager::begin() {
   bool isHttpsActive = !isApMode && shouldEnableHttps();
 
   httpd_ssl_config_t ssl_config = HTTPD_SSL_CONFIG_DEFAULT();
-  ssl_config.httpd.max_uri_handlers = 22;
+  ssl_config.httpd.max_uri_handlers = 28;
   ssl_config.httpd.max_open_sockets = 4;
   ssl_config.httpd.stack_size = 8192;
   ssl_config.httpd.uri_match_fn = httpd_uri_match_wildcard;
@@ -349,6 +352,8 @@ BaseType_t task;
   ESP_LOGI(TAG, "Web server initialization complete");
 
   m_isInitialized = true;
+  if (!isApMode && m_configManager.getConfig<espConfig::misc_config_t>().cameraEnabled)
+    WaveshareCamera::startStream(handleCameraStream, this);
 }
 
 /**
@@ -362,6 +367,7 @@ void WebServerManager::end() {
 
   if(!m_isInitialized) return;
 
+  WaveshareCamera::stopStream();
   if (m_server) {
     httpd_ssl_stop(m_server);
     ESP_LOGI(TAG, "HTTP Server stopped!");
@@ -514,6 +520,11 @@ void WebServerManager::setupRoutes() {
       {"/certificates", HTTP_POST, handleCertificateUpload, this},
       {"/certificates", HTTP_GET, handleCertificateStatus, this},
       {"/certificates", HTTP_DELETE, handleCertificateDelete, this},
+
+      {"/camera.jpg", HTTP_GET, handleCameraSnapshot, this},
+      {"/api/mqtt/status", HTTP_GET, handleHttpMessage, this},
+      {"/api/mqtt", HTTP_GET, handleHttpMessage, this},
+      {"/api/mqtt", HTTP_POST, handleHttpMessage, this},
 
       // Catch-all (must be last)
       {"/*", HTTP_GET, handleRootOrHash, this}};
@@ -1010,17 +1021,19 @@ esp_err_t WebServerManager::handleSaveConfig(httpd_req_t *req) {
     return sendJsonError(req, "Missing 'type' parameter");
   }
 
-  const size_t max_content_size = std::string_view(type_param) == "automation" ? 8192 : 2048;
+  const size_t max_content_size = (std::string_view(type_param) == "automation" || std::string_view(type_param) == "misc") ? 8192 : 2048;
   if (req->content_len >= max_content_size) {
     return sendJsonError(req, "Request body too large", "413 Payload Too Large");
   }
 
   std::vector<char> content(max_content_size, 0);
-  int ret = httpd_req_recv(req, content.data(), content.size() - 1);
-  if (ret <= 0) {
-    return ESP_FAIL;
+  size_t received = 0;
+  while (received < req->content_len) {
+    int ret = httpd_req_recv(req, content.data() + received, req->content_len - received);
+    if (ret <= 0) return ESP_FAIL;
+    received += ret;
   }
-  content[ret] = '\0';
+  content[received] = '\0';
 
   JsonGuard obj(cJSON_Parse(content.data()));
   if (!obj) {
@@ -1049,6 +1062,11 @@ esp_err_t WebServerManager::handleSaveConfig(httpd_req_t *req) {
 
   if (!validateRequest(req, configSchema.get(), obj.get())) {
     return ESP_OK; // validateRequest already sent a full error response
+  }
+
+  if (type == "misc") {
+    auto error = validateDoorbellCameraSettings(configSchema.get(), obj.get());
+    if (!error.empty()) return sendJsonError(req, error);
   }
 
   bool success = false, rebootNeeded = false;
@@ -2823,4 +2841,69 @@ esp_err_t WebServerManager::handleCertificateDelete(httpd_req_t *req) {
   }
 
   return sendJsonError(req, "Failed to delete certificate", HTTPD_500);
+}
+
+
+esp_err_t WebServerManager::handleCameraSnapshot(httpd_req_t* req) {
+  auto* instance = getInstance(req);
+  if (!instance || !instance->basicAuth(req)) return sendAuthFailure(req);
+  return WaveshareCamera::snapshot(req);
+}
+
+esp_err_t WebServerManager::handleCameraStream(httpd_req_t* req) {
+  auto* instance = getInstance(req);
+  if (!instance || !instance->basicAuth(req)) return sendAuthFailure(req);
+  return WaveshareCamera::stream(req);
+}
+
+// Topic + payload enter exactly the same command dispatcher as MQTT.
+esp_err_t WebServerManager::handleHttpMessage(httpd_req_t* req) {
+  auto* instance = getInstance(req);
+  const auto& config = instance->m_configManager.getConfig<espConfig::misc_config_t>();
+  httpd_resp_set_hdr(req, "Cache-Control", "no-store");
+  if (!config.httpApiEnabled) return httpd_resp_send_404(req);
+  if (!config.webAuthEnabled)
+    return sendJsonError(req, "HTTP commands require web authentication", "403 Forbidden");
+  if (!instance->basicAuth(req)) return sendAuthFailure(req);
+  // These machine-to-machine commands must not be triggered by cross-site browser content.
+  char site[32]{};
+  if (httpd_req_get_hdr_value_len(req, "Origin") > 0 ||
+      (httpd_req_get_hdr_value_str(req, "Sec-Fetch-Site", site, sizeof(site)) == ESP_OK &&
+       strcmp(site, "cross-site") == 0))
+    return sendJsonError(req, "Cross-site commands are not allowed", "403 Forbidden");
+  if (!instance->m_mqttManager)
+    return sendJsonError(req, "Message service unavailable", "503 Service Unavailable");
+  httpd_resp_set_type(req, "application/json");
+  if (std::string_view(req->uri).starts_with("/api/mqtt/status")) {
+    auto status = instance->m_mqttManager->httpStatus();
+    return httpd_resp_send(req, status.c_str(), status.size());
+  }
+  const size_t length = httpd_req_get_url_query_len(req);
+  if (length == 0 || length > 1024) return sendJsonError(req, "Missing or oversized query");
+  std::vector<char> query(length + 1), rawTopic(length + 1), rawPayload(length + 1);
+  if (httpd_req_get_url_query_str(req, query.data(), query.size()) != ESP_OK ||
+      httpd_query_key_value(query.data(), "topic", rawTopic.data(), rawTopic.size()) != ESP_OK)
+    return sendJsonError(req, "Missing topic");
+  std::string topic, payload;
+  if (!MessageProtocol::decodeUrl(rawTopic.data(), topic) || topic.empty() || topic.size() > 512)
+    return sendJsonError(req, "Invalid topic");
+  if (req->method == HTTP_GET) {
+    if (httpd_query_key_value(query.data(), "payload", rawPayload.data(), rawPayload.size()) != ESP_OK ||
+        !MessageProtocol::decodeUrl(rawPayload.data(), payload))
+      return sendJsonError(req, "Missing or invalid payload");
+  } else {
+    if (req->content_len < 1 || req->content_len > 3)
+      return sendJsonError(req, "POST body must contain a numeric payload (1 to 3 digits)");
+    payload.resize(req->content_len);
+    size_t received = 0;
+    while (received < payload.size()) {
+      int count = httpd_req_recv(req, payload.data() + received, payload.size() - received);
+      if (count <= 0) return ESP_FAIL;
+      received += count;
+    }
+  }
+  if (!instance->m_mqttManager->dispatchCommand(topic, payload))
+    return sendJsonError(req, "Unknown/disabled command topic, invalid payload, or event queue unavailable");
+  httpd_resp_set_status(req, "202 Accepted");
+  return httpd_resp_sendstr(req, "{\"accepted\":true}");
 }
